@@ -100,7 +100,7 @@ export default class Component {
         // event. This debounce captures them both in the actionsQueue and sends
         // them off at the same time.
         // Note: currently, it's set to 5ms, that might not be the right amount, we'll see.
-        debounce(this.fireMessage, 5).apply(this)
+        debounce(this.fireMessage, 75).apply(this)
 
         // Clear prefetches.
         this.prefetchManager.clearPrefetches()

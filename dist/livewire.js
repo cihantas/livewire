@@ -1827,7 +1827,7 @@ function () {
       // them off at the same time.
       // Note: currently, it's set to 5ms, that might not be the right amount, we'll see.
 
-      Object(_util__WEBPACK_IMPORTED_MODULE_2__["debounce"])(this.fireMessage, 5).apply(this); // Clear prefetches.
+      Object(_util__WEBPACK_IMPORTED_MODULE_2__["debounce"])(this.fireMessage, 75).apply(this); // Clear prefetches.
 
       this.prefetchManager.clearPrefetches();
     }
@@ -5678,7 +5678,7 @@ function walk(root, callback) {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(/*! /Users/calebporzio/Documents/Code/sites/livewire/src/js/index.js */"./src/js/index.js");
+module.exports = __webpack_require__(/*! /Users/ctas/Downloads/src/livewire/src/js/index.js */"./src/js/index.js");
 
 
 /***/ })
