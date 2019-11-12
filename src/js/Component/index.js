@@ -29,6 +29,8 @@ export default class Component {
         this.tearDownCallbacks = []
         this.prefetchManager = new PrefetchManager(this)
 
+        this.actionWorkerInterval = setInterval(() => { this.fireMessage() }, 100);
+
         store.callHook('componentInitialized', this)
 
         this.initialize()
@@ -100,14 +102,14 @@ export default class Component {
         // event. This debounce captures them both in the actionsQueue and sends
         // them off at the same time.
         // Note: currently, it's set to 5ms, that might not be the right amount, we'll see.
-        debounce(this.fireMessage, 75).apply(this)
+        debounce(this.fireMessage, 5).apply(this)
 
         // Clear prefetches.
         this.prefetchManager.clearPrefetches()
     }
 
     fireMessage() {
-        if (this.messageInTransit) return
+        if (this.messageInTransit || this.actionQueue.length <= 0) return
 
         this.messageInTransit = new Message(
             this,
