@@ -1744,6 +1744,8 @@ var Component =
 /*#__PURE__*/
 function () {
   function Component(el, connection) {
+    var _this = this;
+
     _classCallCheck(this, Component);
 
     el.rawNode().__livewire = this;
@@ -1760,6 +1762,9 @@ function () {
     this.modelTimeout = null;
     this.tearDownCallbacks = [];
     this.prefetchManager = new _PrefetchManager__WEBPACK_IMPORTED_MODULE_8__["default"](this);
+    this.actionWorkerInterval = setInterval(function () {
+      _this.fireMessage();
+    }, 100);
     _Store__WEBPACK_IMPORTED_MODULE_7__["default"].callHook('componentInitialized', this);
     this.initialize();
     this.registerEchoListeners();
@@ -1775,14 +1780,14 @@ function () {
   }, {
     key: "initialize",
     value: function initialize() {
-      var _this = this;
+      var _this2 = this;
 
       this.walk(function (el) {
         // Will run for every node in the component tree (not child component nodes).
-        _node_initializer__WEBPACK_IMPORTED_MODULE_6__["default"].initialize(el, _this);
+        _node_initializer__WEBPACK_IMPORTED_MODULE_6__["default"].initialize(el, _this2);
       }, function (el) {
         // When new component is encountered in the tree, add it.
-        _Store__WEBPACK_IMPORTED_MODULE_7__["default"].addComponent(new Component(el, _this.connection));
+        _Store__WEBPACK_IMPORTED_MODULE_7__["default"].addComponent(new Component(el, _this2.connection));
       });
     }
   }, {
@@ -1827,14 +1832,14 @@ function () {
       // them off at the same time.
       // Note: currently, it's set to 5ms, that might not be the right amount, we'll see.
 
-      Object(_util__WEBPACK_IMPORTED_MODULE_2__["debounce"])(this.fireMessage, 75).apply(this); // Clear prefetches.
+      Object(_util__WEBPACK_IMPORTED_MODULE_2__["debounce"])(this.fireMessage, 5).apply(this); // Clear prefetches.
 
       this.prefetchManager.clearPrefetches();
     }
   }, {
     key: "fireMessage",
     value: function fireMessage() {
-      if (this.messageInTransit) return;
+      if (this.messageInTransit || this.actionQueue.length <= 0) return;
       this.messageInTransit = new _Message__WEBPACK_IMPORTED_MODULE_0__["default"](this, this.actionQueue);
       this.connection.sendMessage(this.messageInTransit);
       _Store__WEBPACK_IMPORTED_MODULE_7__["default"].callHook('messageSent', this, this.messageInTransit);
@@ -1855,7 +1860,7 @@ function () {
   }, {
     key: "handleResponse",
     value: function handleResponse(response) {
-      var _this2 = this;
+      var _this3 = this;
 
       _Store__WEBPACK_IMPORTED_MODULE_7__["default"].callHook('responseReceived', this, response);
       this.data = response.data;
@@ -1874,9 +1879,9 @@ function () {
 
       if (response.eventQueue && response.eventQueue.length > 0) {
         response.eventQueue.forEach(function (event) {
-          var _this2$scopedListener;
+          var _this3$scopedListener;
 
-          (_this2$scopedListener = _this2.scopedListeners).call.apply(_this2$scopedListener, [event.event].concat(_toConsumableArray(event.params)));
+          (_this3$scopedListener = _this3.scopedListeners).call.apply(_this3$scopedListener, [event.event].concat(_toConsumableArray(event.params)));
 
           _Store__WEBPACK_IMPORTED_MODULE_7__["default"].emit.apply(_Store__WEBPACK_IMPORTED_MODULE_7__["default"], [event.event].concat(_toConsumableArray(event.params)));
         });
@@ -1885,13 +1890,13 @@ function () {
   }, {
     key: "forceRefreshDataBoundElementsMarkedAsDirty",
     value: function forceRefreshDataBoundElementsMarkedAsDirty(dirtyInputs) {
-      var _this3 = this;
+      var _this4 = this;
 
       this.walk(function (el) {
         if (el.directives.missing('model')) return;
         var modelValue = el.directives.get('model').value;
         if (el.isFocused() && !dirtyInputs.includes(modelValue)) return;
-        el.setInputValueFromModel(_this3);
+        el.setInputValueFromModel(_this4);
       });
     }
   }, {
@@ -1929,7 +1934,7 @@ function () {
   }, {
     key: "handleMorph",
     value: function handleMorph(dom) {
-      var _this4 = this;
+      var _this5 = this;
 
       Object(_dom_morphdom__WEBPACK_IMPORTED_MODULE_3__["default"])(this.el.rawNode(), dom, {
         childrenOnly: false,
@@ -1944,12 +1949,12 @@ function () {
         onBeforeNodeDiscarded: function onBeforeNodeDiscarded(node) {
           var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_5__["default"](node);
           return el.transitionElementOut(function (nodeDiscarded) {
-            _Store__WEBPACK_IMPORTED_MODULE_7__["default"].callHook('elementRemoved', el, _this4);
+            _Store__WEBPACK_IMPORTED_MODULE_7__["default"].callHook('elementRemoved', el, _this5);
           });
         },
         onNodeDiscarded: function onNodeDiscarded(node) {
           var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_5__["default"](node);
-          _Store__WEBPACK_IMPORTED_MODULE_7__["default"].callHook('elementRemoved', el, _this4);
+          _Store__WEBPACK_IMPORTED_MODULE_7__["default"].callHook('elementRemoved', el, _this5);
 
           if (node.__livewire) {
             _Store__WEBPACK_IMPORTED_MODULE_7__["default"].removeComponent(node.__livewire);
@@ -1977,7 +1982,7 @@ function () {
           } // Children will update themselves.
 
 
-          if (fromEl.isComponentRootEl() && fromEl.getAttribute('id') !== _this4.id) return false; // Don't touch Vue components
+          if (fromEl.isComponentRootEl() && fromEl.getAttribute('id') !== _this5.id) return false; // Don't touch Vue components
 
           if (fromEl.isVueComponent()) return false;
         },
@@ -1987,10 +1992,10 @@ function () {
           var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_5__["default"](node);
           var closestComponentId = el.closestRoot().getAttribute('id');
 
-          if (closestComponentId === _this4.id) {
-            _node_initializer__WEBPACK_IMPORTED_MODULE_6__["default"].initialize(el, _this4);
+          if (closestComponentId === _this5.id) {
+            _node_initializer__WEBPACK_IMPORTED_MODULE_6__["default"].initialize(el, _this5);
           } else if (el.isComponentRootEl()) {
-            _Store__WEBPACK_IMPORTED_MODULE_7__["default"].addComponent(new Component(el, _this4.connection));
+            _Store__WEBPACK_IMPORTED_MODULE_7__["default"].addComponent(new Component(el, _this5.connection));
           } // Skip.
 
         }
@@ -1999,14 +2004,14 @@ function () {
   }, {
     key: "walk",
     value: function walk(callback) {
-      var _this5 = this;
+      var _this6 = this;
 
       var callbackWhenNewComponentIsEncountered = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : function (el) {};
 
       Object(_util__WEBPACK_IMPORTED_MODULE_2__["walk"])(this.el.rawNode(), function (node) {
         var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_5__["default"](node); // Skip the root component element.
 
-        if (el.isSameNode(_this5.el)) {
+        if (el.isSameNode(_this6.el)) {
           callback(el);
           return;
         } // If we encounter a nested component, skip walking that tree.
@@ -2072,19 +2077,19 @@ function () {
   }, {
     key: "modelSyncDebounce",
     value: function modelSyncDebounce(callback, time) {
-      var _this6 = this;
+      var _this7 = this;
 
       return function (e) {
-        clearTimeout(_this6.modelTimeout);
+        clearTimeout(_this7.modelTimeout);
 
-        _this6.modelTimeoutCallback = function () {
+        _this7.modelTimeoutCallback = function () {
           callback(e);
         };
 
-        _this6.modelTimeout = setTimeout(function () {
+        _this7.modelTimeout = setTimeout(function () {
           callback(e);
-          _this6.modelTimeout = null;
-          _this6.modelTimeoutCallback = null;
+          _this7.modelTimeout = null;
+          _this7.modelTimeoutCallback = null;
         }, time);
       };
     }
